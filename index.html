@@ -64,7 +64,7 @@
             <option value="Scanary">Scanary</option>
           </select>
           <button onclick="validasiDanMulai()" class="w-full py-3.5 bg-cyan-500/20 hover:bg-cyan-500/40 border border-cyan-400/50 rounded-xl text-cyan-50 font-mono text-sm font-bold tracking-widest uppercase transition-colors">
-            MULAI SINKRONISASI >>
+            MULAI MISI >>
           </button>
         </div>
 
@@ -75,7 +75,6 @@
   <script>
     // MASUKKAN URL APPS SCRIPT DI SINI
     const API_URL = "https://script.google.com/macros/s/AKfycbxTISValSAZM5VzzWi6N-RpMTRDJuDCwLEkpdFonphoF4nI4hiwJ9loigw4kqiM0JyWZg/exec";
-
     let timUser = "";
     let daftarSoal = [];
     let indeksSoal = 0;
@@ -84,7 +83,7 @@
     let waktuMulai = 0;
     let memproses = false;
     
-    // VARIABEL UNTUK LOGIKA SKOR BARU
+    // VARIABEL SKOR
     let totalSoalAwal = 0; 
     let skorBenar = 0; 
 
@@ -103,8 +102,11 @@
     function ambilDataSoal() {
       fetch(API_URL).then(r => r.json()).then(data => { 
         daftarSoal = data; 
-        totalSoalAwal = data.length * 10; // Kunci jumlah soal maksimal (misal: 10)
-        skorBenar = 0;               // Set skor awal 0
+        
+        // PERUBAHAN 1: Kalikan jumlah soal dengan 10 (Jika 10 soal = Skor Maksimal 100)
+        totalSoalAwal = data.length * 10; 
+        
+        skorBenar = 0;               
         indeksSoal = 0; 
         tampilkanSoal(); 
       })
@@ -115,10 +117,9 @@
       memproses = false;
       const container = document.getElementById('quiz-container');
       
-      // Update UI Skor saat ini (Contoh: 0/10)
+      // Update UI Skor saat ini (Contoh awal: 0/100)
       document.getElementById('indikator-soal').innerText = `${skorBenar}/${totalSoalAwal}`;
 
-      // KONDISI SELESAI SEKARANG BERDASARKAN SKOR, BUKAN ARRAY!
       if (skorBenar >= totalSoalAwal) {
         let durasi = Math.floor((Date.now() - waktuMulai) / 1000);
         let teksDurasi = durasi >= 60 ? `${Math.floor(durasi/60)} mnt ${durasi%60} dtk` : `${durasi} dtk`;
@@ -127,7 +128,6 @@
         return;
       }
 
-      // Ambil soal berdasarkan indeks antrean saat ini
       soalSaatIni = daftarSoal[indeksSoal];
       let html = `<h3 class="text-base sm:text-lg font-medium text-white mb-5 leading-relaxed">${soalSaatIni.pertanyaan}</h3><div class="space-y-2.5" id="opsi-container">`;
       for (const [key, value] of Object.entries(soalSaatIni.opsi)) {
@@ -141,7 +141,7 @@
     function kirimDataKeAdmin(durasi) {
       fetch(API_URL, { method: "POST", mode: "no-cors", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ timPeserta: timUser, durasiKerja: durasi }) })
       .then(() => {
-        document.getElementById('quiz-container').innerHTML = `<div class="text-center py-6"><div class="inline-block bg-cyan-950/40 text-cyan-300 rounded-full p-4 border border-cyan-400/30 mb-4"><svg class="w-12 h-12 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg></div><h2 class="text-2xl font-bold text-white mb-2 hologram-text tracking-wide">MISI SELESAI !</h2><p class="text-cyan-200 text-sm font-light mb-2">Kerja bagus, <b>${timUser}</b>.</p><p class="text-emerald-400 text-xs font-mono mb-2">Waktu Selesai: ${durasi}</p><p class="text-cyan-500 text-xs font-mono">Silahkan lanjut ke misi berikutnya.</p></div>`;
+        document.getElementById('quiz-container').innerHTML = `<div class="text-center py-6"><div class="inline-block bg-cyan-950/40 text-cyan-300 rounded-full p-4 border border-cyan-400/30 mb-4"><svg class="w-12 h-12 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg></div><h2 class="text-2xl font-bold text-white mb-2 hologram-text tracking-wide">MAMPU !</h2><p class="text-cyan-200 text-sm font-light mb-2">Kerja bagus, <b>${timUser}</b>.</p><p class="text-emerald-400 text-xs font-mono mb-2">Waktu Selesai: ${durasi}</p><p class="text-cyan-500 text-xs font-mono">Data skor sempurna telah dikirim ke Admin.</p></div>`;
       });
     }
 
@@ -152,9 +152,10 @@
       document.querySelectorAll('.btn-opsi').forEach(b => b.disabled = true); 
       
       if (jawabanUser === soalSaatIni.jawabanBenar) {
-        // JAWABAN BENAR: Tambah skor
-        skorBenar++= 10;
-        document.getElementById('indikator-soal').innerText = `${skorBenar}/${totalSoalAwal}`; // Langsung update UI skor agar terasa memuaskan
+        
+        // PERUBAHAN 2: Tambah 10 poin setiap jawaban benar
+        skorBenar += 10;
+        document.getElementById('indikator-soal').innerText = `${skorBenar}/${totalSoalAwal}`; 
 
         btn.classList.add('btn-benar'); btn.classList.remove('animasi-salah');
         document.getElementById(`centang-${jawabanUser}`).classList.remove('hidden');
@@ -164,7 +165,6 @@
         panel.classList.remove('hidden'); setTimeout(() => panel.scrollIntoView({ behavior: 'smooth' }), 100);
 
       } else {
-        // JAWABAN SALAH: Skor tetap, soal dilempar ke belakang
         memproses = true;
         btn.classList.add('animasi-salah');
         
@@ -174,7 +174,6 @@
         
         daftarSoal.push(soalSaatIni);
         
-        // Pindah otomatis dalam 1.5 detik
         setTimeout(() => { lanjutSoal(); }, 1500);
       }
     }
