@@ -1,0 +1,294 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Kuis QRIS Digital</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  
+  <style>
+    body {
+      background-color: #030a16;
+      background-image: 
+        radial-gradient(circle at 50% 30%, rgba(0, 163, 255, 0.15), transparent 50%),
+        linear-gradient(rgba(0, 255, 255, 0.02) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(0, 255, 255, 0.02) 1px, transparent 1px);
+      background-size: 100% 100%, 30px 30px, 30px 30px;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      color: #e2f1ff;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    .glass-panel {
+      background: rgba(10, 25, 50, 0.6);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      border: 1px solid rgba(0, 255, 255, 0.15);
+      box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.5);
+    }
+
+    .scanlines {
+      background: linear-gradient(to bottom, transparent 50%, rgba(0, 255, 255, 0.03) 51%);
+      background-size: 100% 4px;
+      pointer-events: none;
+    }
+
+    .btn-opsi {
+      background: rgba(255, 255, 255, 0.02);
+      border: 1px solid rgba(0, 200, 255, 0.25);
+      transition: all 0.2s ease;
+    }
+    
+    .btn-opsi:active:not(:disabled) {
+      background: rgba(0, 255, 255, 0.15);
+      border-color: rgba(0, 255, 255, 0.8);
+      transform: scale(0.98);
+    }
+
+    @keyframes shake {
+      0%, 100% { transform: translateX(0); }
+      25% { transform: translateX(-6px); }
+      75% { transform: translateX(6px); }
+    }
+    
+    .animasi-salah {
+      animation: shake 0.3s ease-in-out;
+      background: rgba(255, 50, 50, 0.15) !important;
+      border-color: rgba(255, 50, 50, 0.5) !important;
+      color: #ffb3b3 !important;
+    }
+
+    .btn-benar {
+      background: rgba(0, 255, 170, 0.15) !important;
+      border-color: rgba(0, 255, 170, 0.7) !important;
+      box-shadow: 0 0 15px rgba(0, 255, 170, 0.3);
+      color: #ccffeb !important;
+    }
+
+    .hologram-text {
+      text-shadow: 0 0 6px rgba(0, 255, 255, 0.3);
+    }
+  </style>
+</head>
+<body class="min-h-screen flex items-center justify-center p-3 sm:p-6 select-none">
+
+  <div id="toast-salah" class="fixed top-12 left-4 right-4 sm:left-1/2 sm:right-auto sm:transform sm:-translate-x-1/2 bg-red-950/90 border border-red-500/50 backdrop-blur-md text-red-200 px-5 py-3 rounded-xl shadow-xl opacity-0 transition-opacity duration-300 pointer-events-none z-50 hidden flex items-center justify-center gap-3 text-center">
+    <svg class="w-5 h-5 text-red-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+    </svg>
+    <span class="font-mono text-xs tracking-wide">AKSES DITOLAK. COBA OPSI LAIN!</span>
+  </div>
+
+  <div class="glass-panel rounded-2xl w-full max-w-xl relative overflow-hidden my-auto">
+    <div class="absolute inset-0 scanlines z-0"></div>
+
+    <div class="relative z-10 p-5 sm:p-8">
+      
+      <div class="border-b border-cyan-900 pb-3 mb-5 flex justify-between items-center">
+        <div class="flex items-center gap-2">
+          <svg class="w-6 h-6 text-cyan-400 drop-shadow-[0_0_5px_rgba(0,255,255,0.6)]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4 4h6v6H4zM14 4h6v6h-6zM4 14h6v6H4zM14 14h2v2h-2zM18 14h2v2h-2zM14 18h2v2h-2zM18 18h2v2h-2z"></path>
+          </svg>
+          <h1 class="text-lg font-bold text-cyan-50 tracking-wider hologram-text uppercase">QRIS <span class="text-cyan-400 font-light">Gate</span></h1>
+        </div>
+        <span id="badge-soal" class="text-cyan-300 text-xs font-mono bg-cyan-950/60 px-2.5 py-1 rounded border border-cyan-800/60 hidden">
+          Soal: <span id="indikator-soal">0/0</span>
+        </span>
+      </div>
+
+      <div id="quiz-container" class="min-h-[280px] flex flex-col justify-center">
+        
+        <div id="form-identitas" class="space-y-4 py-4">
+          <h2 class="text-base sm:text-lg text-cyan-200 font-mono tracking-wide">MASUKKAN IDENTITAS PESERTA:</h2>
+          <input type="text" id="input-nama" placeholder="Tulis nama lengkap Anda..." class="w-full p-3.5 rounded-xl bg-cyan-950/40 border border-cyan-500/30 text-white placeholder-cyan-600 focus:outline-none focus:border-cyan-400 text-sm font-mono tracking-wide transition-colors">
+          <button onclick="validasiDanMulai()" class="w-full py-3.5 bg-cyan-500/20 hover:bg-cyan-500/40 border border-cyan-400/50 rounded-xl text-cyan-50 font-mono text-sm font-bold tracking-widest uppercase transition-colors">
+            MULAI SINKRONISASI >>
+          </button>
+        </div>
+
+      </div>
+
+    </div>
+  </div>
+
+  <script>
+    // PENTING: MASUKKAN URL WEB APP ANDA DI SINI
+    const API_URL = "https://script.google.com/macros/s/AKfycbxTISValSAZM5VzzWi6N-RpMTRDJuDCwLEkpdFonphoF4nI4hiwJ9loigw4kqiM0JyWZg/exec";
+
+    let namaUser = "";
+    let daftarSoal = [];
+    let indeksSoal = 0;
+    let soalSaatIni = null;
+    let toastTimeout;
+
+    function validasiDanMulai() {
+      const input = document.getElementById('input-nama');
+      namaUser = input.value.trim();
+      
+      if (namaUser === "") {
+        alert("Nama wajib diisi untuk keperluan monitoring tim admin.");
+        return;
+      }
+      
+      // Tampilkan Loading state setelah mengisi nama
+      document.getElementById('form-identitas').remove();
+      document.getElementById('badge-soal').classList.remove('hidden');
+      
+      const container = document.getElementById('quiz-container');
+      container.innerHTML = `
+        <div class="text-center py-10">
+          <div class="inline-block animate-spin h-8 w-8 border-4 border-cyan-400 border-t-transparent rounded-full mb-4"></div>
+          <h2 class="text-cyan-300 font-mono text-sm tracking-widest animate-pulse">MEMUAT MODUL SOAL...</h2>
+        </div>
+      `;
+
+      // Ambil data soal
+      ambilDataSoal();
+    }
+
+    function ambilDataSoal() {
+      fetch(API_URL)
+        .then(response => response.json())
+        .then(data => {
+          daftarSoal = data;
+          indeksSoal = 0;
+          tampilkanSoal();
+        })
+        .catch(err => {
+          document.getElementById('quiz-container').innerHTML = `
+            <div class="text-center text-red-400 font-mono text-sm p-4 border border-red-900/50 rounded-xl bg-red-950/20">
+              Koneksi terputus. Pastikan setelan Apps Script sudah benar.
+            </div>
+          `;
+        });
+    }
+
+    function tampilkanSoal() {
+      const container = document.getElementById('quiz-container');
+      const indikatorSpan = document.getElementById('indikator-soal');
+      
+      indikatorSpan.innerText = `${indeksSoal + 1}/${daftarSoal.length}`;
+
+      if (indeksSoal >= daftarSoal.length) {
+        indikatorSpan.innerText = "DONE";
+        
+        // Tampilkan layar loading monitoring sebelum selesai penuh
+        container.innerHTML = `
+          <div class="text-center py-10">
+            <div class="inline-block animate-spin h-8 w-8 border-4 border-emerald-400 border-t-transparent rounded-full mb-4"></div>
+            <h2 class="text-emerald-300 font-mono text-sm tracking-widest animate-pulse">MENGIRIM LOG SELESAI KE ADMIN...</h2>
+          </div>
+        `;
+        
+        // KIRIM DATA MONITORING KE SPREADSHEET (POST REQUEST)
+        kirimDataKeAdmin();
+        return;
+      }
+
+      soalSaatIni = daftarSoal[indeksSoal];
+
+      let html = `
+        <h3 class="text-base sm:text-lg font-medium text-white mb-5 leading-relaxed">${soalSaatIni.pertanyaan}</h3>
+        <div class="space-y-2.5" id="opsi-container">
+      `;
+      
+      for (const [key, value] of Object.entries(soalSaatIni.opsi)) {
+        html += `
+          <button id="btn-${key}" class="btn-opsi w-full text-left p-3.5 rounded-xl text-sm text-cyan-100 focus:outline-none flex items-start" onclick="cekJawaban('${key}')">
+            <span class="font-mono text-cyan-400 font-bold mr-2.5">[${key}]</span> 
+            <span class="flex-1 leading-normal">${value}</span>
+            <span id="centang-${key}" class="ml-2 text-xs font-mono text-emerald-400 hidden flex-shrink-0 self-center">✓ VALID</span>
+          </button>
+        `;
+      }
+      
+      html += `
+        </div>
+        <div id="panel-pembahasan" class="hidden mt-5 bg-cyan-950/80 border border-cyan-500/25 rounded-xl p-4 shadow-inner max-h-[220px] overflow-y-auto">
+          <div class="flex items-center gap-1.5 mb-1.5">
+            <svg class="w-4 h-4 text-cyan-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+            <h4 class="text-cyan-400 font-bold tracking-wider text-xs uppercase">LOG PEMBAHASAN</h4>
+          </div>
+          <p class="text-cyan-100/90 text-xs sm:text-sm leading-relaxed mb-4">${soalSaatIni.pembahasan}</p>
+          
+          <button onclick="lanjutSoal()" class="w-full py-2.5 bg-cyan-500/20 hover:bg-cyan-500/40 border border-cyan-400/40 rounded-lg text-cyan-50 text-xs font-bold tracking-widest uppercase transition-colors sticky bottom-0">
+            SOAL BERIKUTNYA >>
+          </button>
+        </div>
+      `;
+      
+      container.innerHTML = html;
+    }
+
+    function kirimDataKeAdmin() {
+      fetch(API_URL, {
+        method: "POST",
+        mode: "no-cors", // Digunakan agar tidak terhalang CORS policy di browser
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ namaPeserta: namaUser })
+      })
+      .then(() => {
+        // Tampilan sukses akhir setelah data terkirim
+        document.getElementById('quiz-container').innerHTML = `
+          <div class="text-center py-6">
+            <div class="inline-block bg-cyan-950/40 text-cyan-300 rounded-full p-4 border border-cyan-400/30 shadow-lg mb-4">
+              <svg class="w-12 h-12 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+            </div>
+            <h2 class="text-2xl font-bold text-white mb-2 hologram-text tracking-wide">SINKRONISASI BERHASIL</h2>
+            <p class="text-cyan-200 text-xs sm:text-sm font-light px-2 mb-2">Terima kasih, <b>${namaUser}</b>.</p>
+            <p class="text-cyan-500 text-xs font-mono">Laporan kelulusan Anda telah masuk ke sistem monitoring Admin.</p>
+          </div>
+        `;
+      })
+      .catch(err => {
+        console.log(err);
+      });
+    }
+
+    function tampilkanToastSalah() {
+      const toast = document.getElementById('toast-salah');
+      toast.classList.remove('hidden');
+      setTimeout(() => { toast.classList.replace('opacity-0', 'opacity-100'); }, 10);
+
+      clearTimeout(toastTimeout);
+      toastTimeout = setTimeout(() => {
+        toast.classList.replace('opacity-100', 'opacity-0');
+        setTimeout(() => { toast.classList.add('hidden'); }, 300);
+      }, 1800);
+    }
+
+    function cekJawaban(jawabanUser) {
+      const tombolPilihan = document.getElementById(`btn-${jawabanUser}`);
+
+      if (jawabanUser === soalSaatIni.jawabanBenar) {
+        tombolPilihan.classList.add('btn-benar');
+        tombolPilihan.classList.remove('animasi-salah');
+        document.getElementById(`centang-${jawabanUser}`).classList.remove('hidden');
+
+        const semuaTombol = document.querySelectorAll('.btn-opsi');
+        semuaTombol.forEach(btn => {
+          btn.disabled = true;
+          if (btn.id !== `btn-${jawabanUser}`) btn.style.opacity = '0.3';
+        });
+
+        const panelPembahasan = document.getElementById('panel-pembahasan');
+        panelPembahasan.classList.remove('hidden');
+        
+        setTimeout(() => {
+          panelPembahasan.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        }, 100);
+
+      } else {
+        tampilkanToastSalah();
+        tombolPilihan.classList.add('animasi-salah');
+        setTimeout(() => { tombolPilihan.classList.remove('animasi-salah'); }, 300);
+      }
+    }
+
+    function lanjutSoal() {
+      indeksSoal++;
+      tampilkanSoal();
+    }
+  </script>
+</body>
+</html>
