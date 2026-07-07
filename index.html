@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Kuis QRIS Digital - Mastery Flow</title>
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  
+  <style>
+    body { background-color: #030a16; background-image: radial-gradient(circle at 50% 30%, rgba(0, 163, 255, 0.15), transparent 50%), linear-gradient(rgba(0, 255, 255, 0.02) 1px, transparent 1px), linear-gradient(90deg, rgba(0, 255, 255, 0.02) 1px, transparent 1px); background-size: 100% 100%, 30px 30px, 30px 30px; font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; color: #e2f1ff; -webkit-tap-highlight-color: transparent; }
+    .glass-panel { background: rgba(10, 25, 50, 0.6); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); border: 1px solid rgba(0, 255, 255, 0.15); box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.5); }
+    .scanlines { background: linear-gradient(to bottom, transparent 50%, rgba(0, 255, 255, 0.03) 51%); background-size: 100% 4px; pointer-events: none; }
+    .btn-opsi { background: rgba(255, 255, 255, 0.02); border: 1px solid rgba(0, 200, 255, 0.25); transition: all 0.2s ease; }
+    .btn-opsi:active:not(:disabled) { background: rgba(0, 255, 255, 0.15); border-color: rgba(0, 255, 255, 0.8); transform: scale(0.98); }
+    @keyframes shake { 0%, 100% { transform: translateX(0); } 25% { transform: translateX(-6px); } 75% { transform: translateX(6px); } }
+    .animasi-salah { animation: shake 0.3s ease-in-out; background: rgba(255, 50, 50, 0.15) !important; border-color: rgba(255, 50, 50, 0.5) !important; color: #ffb3b3 !important; }
+    .btn-benar { background: rgba(0, 255, 170, 0.15) !important; border-color: rgba(0, 255, 170, 0.7) !important; box-shadow: 0 0 15px rgba(0, 255, 170, 0.3); color: #ccffeb !important; }
+    .hologram-text { text-shadow: 0 0 6px rgba(0, 255, 255, 0.3); }
+  </style>
+</head>
+<body class="min-h-screen flex items-center justify-center p-3 sm:p-6 select-none">
+
+  <!-- Toast Notifikasi Ringan -->
+  <div id="toast-salah" class="fixed top-12 left-4 right-4 sm:left-1/2 sm:right-auto sm:transform sm:-translate-x-1/2 bg-red-950/90 border border-red-500/50 backdrop-blur-md text-red-200 px-5 py-3 rounded-xl shadow-xl opacity-0 transition-opacity duration-300 pointer-events-none z-50 hidden flex items-center justify-center gap-3 text-center">
+    <svg class="w-5 h-5 text-red-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+    <span class="font-mono text-xs tracking-wide">AKSES DITOLAK. DIALIHKAN KE AKHIR!</span>
+  </div>
+
+  <div class="glass-panel rounded-2xl w-full max-w-xl relative overflow-hidden my-auto">
+    <div class="absolute inset-0 scanlines z-0"></div>
+    <div class="relative z-10 p-5 sm:p-8">
+      
+      <!-- Header -->
+      <div class="border-b border-cyan-900 pb-3 mb-5 flex justify-between items-center">
+        <div class="flex items-center gap-2">
+          <svg class="w-6 h-6 text-cyan-400 drop-shadow-[0_0_5px_rgba(0,255,255,0.6)]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4 4h6v6H4zM14 4h6v6h-6zM4 14h6v6H4zM14 14h2v2h-2zM18 14h2v2h-2zM14 18h2v2h-2zM18 18h2v2h-2z"></path></svg>
+          <h1 class="text-lg font-bold text-cyan-50 tracking-wider hologram-text uppercase">QRIS <span class="text-cyan-400 font-light">Gate</span></h1>
+        </div>
+        
+        <!-- TEKS INDIKATOR DIRUBAH MENJADI SKOR -->
+        <span id="badge-soal" class="text-emerald-300 text-xs font-mono bg-emerald-950/40 px-2.5 py-1 rounded border border-emerald-800/60 hidden shadow-[0_0_10px_rgba(16,185,129,0.2)]">
+          Skor: <span id="indikator-soal" class="font-bold">0/0</span>
+        </span>
+      </div>
+
+      <!-- Content -->
+      <div id="quiz-container" class="min-h-[280px] flex flex-col justify-center">
+        
+        <!-- DROPDOWN TIM -->
+        <div id="form-identitas" class="space-y-4 py-4">
+          <h2 class="text-base sm:text-lg text-cyan-200 font-mono tracking-wide">IDENTITAS TIM:</h2>
+          <select id="select-tim" class="w-full p-3.5 rounded-xl bg-cyan-950/60 border border-cyan-500/30 text-white focus:outline-none focus:border-cyan-400 text-sm font-mono tracking-wide transition-colors">
+            <option value="" class="text-cyan-600">-- PILIH TIM ANDA --</option>
+            <option value="Bibir Merah">Bibir Merah</option>
+            <option value="Papeda QA">Papeda QA</option>
+            <option value="Bobota Legacy">Bobota Legacy</option>
+            <option value="Fala Bualawa">Fala Bualawa</option>
+            <option value="Bagea">Bagea</option>
+            <option value="Asida">Asida</option>
+            <option value="Andara">Andara</option>
+            <option value="Sagu">Sagu</option>
+            <option value="Gosora QRISpy">Gosora QRISpy</option>
+            <option value="Scanary">Scanary</option>
+          </select>
+          <button onclick="validasiDanMulai()" class="w-full py-3.5 bg-cyan-500/20 hover:bg-cyan-500/40 border border-cyan-400/50 rounded-xl text-cyan-50 font-mono text-sm font-bold tracking-widest uppercase transition-colors">
+            MULAI SINKRONISASI >>
+          </button>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // MASUKKAN URL APPS SCRIPT DI SINI
+    const API_URL = "https://script.google.com/macros/s/AKfycbxTISValSAZM5VzzWi6N-RpMTRDJuDCwLEkpdFonphoF4nI4hiwJ9loigw4kqiM0JyWZg/exec";
+
+    let timUser = "";
+    let daftarSoal = [];
+    let indeksSoal = 0;
+    let soalSaatIni = null;
+    let toastTimeout;
+    let waktuMulai = 0;
+    let memproses = false;
+    
+    // VARIABEL UNTUK LOGIKA SKOR BARU
+    let totalSoalAwal = 0; 
+    let skorBenar = 0; 
+
+    function validasiDanMulai() {
+      const select = document.getElementById('select-tim');
+      timUser = select.value;
+      if (timUser === "") return alert("Pilih tim Anda terlebih dahulu!");
+      
+      waktuMulai = Date.now();
+      document.getElementById('form-identitas').remove();
+      document.getElementById('badge-soal').classList.remove('hidden');
+      document.getElementById('quiz-container').innerHTML = `<div class="text-center py-10"><div class="inline-block animate-spin h-8 w-8 border-4 border-cyan-400 border-t-transparent rounded-full mb-4"></div><h2 class="text-cyan-300 font-mono text-sm tracking-widest animate-pulse">MEMUAT DATA...</h2></div>`;
+      ambilDataSoal();
+    }
+
+    function ambilDataSoal() {
+      fetch(API_URL).then(r => r.json()).then(data => { 
+        daftarSoal = data; 
+        totalSoalAwal = data.length; // Kunci jumlah soal maksimal (misal: 10)
+        skorBenar = 0;               // Set skor awal 0
+        indeksSoal = 0; 
+        tampilkanSoal(); 
+      })
+      .catch(e => document.getElementById('quiz-container').innerHTML = `<div class="text-center text-red-400 font-mono text-sm">Gagal memuat. Cek koneksi / link API.</div>`);
+    }
+
+    function tampilkanSoal() {
+      memproses = false;
+      const container = document.getElementById('quiz-container');
+      
+      // Update UI Skor saat ini (Contoh: 0/10)
+      document.getElementById('indikator-soal').innerText = `${skorBenar}/${totalSoalAwal}`;
+
+      // KONDISI SELESAI SEKARANG BERDASARKAN SKOR, BUKAN ARRAY!
+      if (skorBenar >= totalSoalAwal) {
+        let durasi = Math.floor((Date.now() - waktuMulai) / 1000);
+        let teksDurasi = durasi >= 60 ? `${Math.floor(durasi/60)} mnt ${durasi%60} dtk` : `${durasi} dtk`;
+        container.innerHTML = `<div class="text-center py-10"><div class="inline-block animate-spin h-8 w-8 border-4 border-emerald-400 border-t-transparent rounded-full mb-4"></div><h2 class="text-emerald-300 font-mono text-sm animate-pulse">MENYIMPAN LOG...</h2></div>`;
+        kirimDataKeAdmin(teksDurasi);
+        return;
+      }
+
+      // Ambil soal berdasarkan indeks antrean saat ini
+      soalSaatIni = daftarSoal[indeksSoal];
+      let html = `<h3 class="text-base sm:text-lg font-medium text-white mb-5 leading-relaxed">${soalSaatIni.pertanyaan}</h3><div class="space-y-2.5" id="opsi-container">`;
+      for (const [key, value] of Object.entries(soalSaatIni.opsi)) {
+        html += `<button id="btn-${key}" class="btn-opsi w-full text-left p-3.5 rounded-xl text-sm text-cyan-100 flex items-start" onclick="cekJawaban('${key}')"><span class="font-mono text-cyan-400 font-bold mr-2.5">[${key}]</span> <span class="flex-1">${value}</span><span id="centang-${key}" class="ml-2 text-xs font-mono text-emerald-400 hidden flex-shrink-0">✓ VALID</span></button>`;
+      }
+      
+      html += `</div><div id="panel-pembahasan" class="hidden mt-5 bg-cyan-950/80 border border-cyan-500/25 rounded-xl p-4 shadow-inner max-h-[220px] overflow-y-auto"><h4 class="text-cyan-400 font-bold tracking-wider text-xs mb-3">LOG PEMBAHASAN</h4><p class="text-cyan-100/90 text-xs sm:text-sm mb-4">${soalSaatIni.pembahasan}</p><button onclick="lanjutSoal()" class="w-full py-2.5 bg-cyan-500/20 hover:bg-cyan-500/40 border border-cyan-400/40 rounded-lg text-cyan-50 text-xs font-bold transition-colors">LANJUT >></button></div>`;
+      container.innerHTML = html;
+    }
+
+    function kirimDataKeAdmin(durasi) {
+      fetch(API_URL, { method: "POST", mode: "no-cors", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ timPeserta: timUser, durasiKerja: durasi }) })
+      .then(() => {
+        document.getElementById('quiz-container').innerHTML = `<div class="text-center py-6"><div class="inline-block bg-cyan-950/40 text-cyan-300 rounded-full p-4 border border-cyan-400/30 mb-4"><svg class="w-12 h-12 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg></div><h2 class="text-2xl font-bold text-white mb-2 hologram-text tracking-wide">MAMPU !</h2><p class="text-cyan-200 text-sm font-light mb-2">Kerja bagus, <b>${timUser}</b>.</p><p class="text-emerald-400 text-xs font-mono mb-2">Waktu Selesai: ${durasi}</p><p class="text-cyan-500 text-xs font-mono">Data skor sempurna telah dikirim ke Admin.</p></div>`;
+      });
+    }
+
+    function cekJawaban(jawabanUser) {
+      if (memproses) return; 
+      
+      const btn = document.getElementById(`btn-${jawabanUser}`);
+      document.querySelectorAll('.btn-opsi').forEach(b => b.disabled = true); 
+      
+      if (jawabanUser === soalSaatIni.jawabanBenar) {
+        // JAWABAN BENAR: Tambah skor
+        skorBenar++;
+        document.getElementById('indikator-soal').innerText = `${skorBenar}/${totalSoalAwal}`; // Langsung update UI skor agar terasa memuaskan
+
+        btn.classList.add('btn-benar'); btn.classList.remove('animasi-salah');
+        document.getElementById(`centang-${jawabanUser}`).classList.remove('hidden');
+        document.querySelectorAll('.btn-opsi').forEach(b => { if (b.id !== btn.id) b.style.opacity = '0.3'; });
+        
+        const panel = document.getElementById('panel-pembahasan');
+        panel.classList.remove('hidden'); setTimeout(() => panel.scrollIntoView({ behavior: 'smooth' }), 100);
+
+      } else {
+        // JAWABAN SALAH: Skor tetap, soal dilempar ke belakang
+        memproses = true;
+        btn.classList.add('animasi-salah');
+        
+        const toast = document.getElementById('toast-salah');
+        toast.classList.remove('hidden'); setTimeout(() => toast.classList.replace('opacity-0', 'opacity-100'), 10);
+        clearTimeout(toastTimeout); toastTimeout = setTimeout(() => { toast.classList.replace('opacity-100', 'opacity-0'); setTimeout(() => toast.classList.add('hidden'), 300); }, 1800);
+        
+        daftarSoal.push(soalSaatIni);
+        
+        // Pindah otomatis dalam 1.5 detik
+        setTimeout(() => { lanjutSoal(); }, 1500);
+      }
+    }
+
+    function lanjutSoal() { 
+      indeksSoal++; 
+      tampilkanSoal(); 
+    }
+  </script>
+</body>
+</html>
