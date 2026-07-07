@@ -89,7 +89,7 @@
           <svg class="w-6 h-6 text-cyan-400 drop-shadow-[0_0_5px_rgba(0,255,255,0.6)]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4 4h6v6H4zM14 4h6v6h-6zM4 14h6v6H4zM14 14h2v2h-2zM18 14h2v2h-2zM14 18h2v2h-2zM18 18h2v2h-2z"></path>
           </svg>
-          <h1 class="text-lg font-bold text-cyan-50 tracking-wider hologram-text uppercase">QRIS Jelajah Kuliner<span class="text-cyan-400 font-light">Maluku Utara</span></h1>
+          <h1 class="text-lg font-bold text-cyan-50 tracking-wider hologram-text uppercase">Jelajah Kuliner <span class="text-cyan-400 font-light">Maluku Utara</span></h1>
         </div>
         <span id="badge-soal" class="text-cyan-300 text-xs font-mono bg-cyan-950/60 px-2.5 py-1 rounded border border-cyan-800/60 hidden">
           Soal: <span id="indikator-soal">0/0</span>
@@ -114,7 +114,7 @@
             <option value="Tim 10">Tim 10</option>
           </select>
           <button onclick="validasiDanMulai()" class="w-full py-3.5 bg-cyan-500/20 hover:bg-cyan-500/40 border border-cyan-400/50 rounded-xl text-cyan-50 font-mono text-sm font-bold tracking-widest uppercase transition-colors">
-            MULAI SINKRONISASI >>
+            MULAI MISI >>
           </button>
         </div>
 
@@ -124,7 +124,7 @@
   </div>
 
   <script>
-    // MASUKKAN URL WEB APP APPS SCRIPT ANDA DI SINI
+    // PENTING: GANTI TEKS DI BAWAH INI DENGAN URL WEB APP APPS SCRIPT ANDA
     const API_URL = "https://script.google.com/macros/s/AKfycbxTISValSAZM5VzzWi6N-RpMTRDJuDCwLEkpdFonphoF4nI4hiwJ9loigw4kqiM0JyWZg/exec";
 
     let timUser = "";
@@ -132,8 +132,6 @@
     let indeksSoal = 0;
     let soalSaatIni = null;
     let toastTimeout;
-    
-    // Variabel Pencatat Waktu
     let waktuMulai = 0;
 
     function validasiDanMulai() {
@@ -145,7 +143,7 @@
         return;
       }
       
-      // Catat waktu mulai saat tombol ditekan
+      // Catat waktu mulai
       waktuMulai = Date.now();
       
       document.getElementById('form-identitas').remove();
@@ -173,7 +171,7 @@
         .catch(err => {
           document.getElementById('quiz-container').innerHTML = `
             <div class="text-center text-red-400 font-mono text-sm p-4 border border-red-900/50 rounded-xl bg-red-950/20">
-              Koneksi terputus. Pastikan setelan Apps Script sudah benar.
+              Koneksi terputus. Pastikan Anda sudah mengganti API_URL dengan link Apps Script yang benar.
             </div>
           `;
         });
@@ -188,7 +186,7 @@
       if (indeksSoal >= daftarSoal.length) {
         indikatorSpan.innerText = "DONE";
         
-        // HITUNG DURASI PENGERJAAN
+        // HITUNG DURASI
         let waktuSelesai = Date.now();
         let selisihDetik = Math.floor((waktuSelesai - waktuMulai) / 1000);
         let menit = Math.floor(selisihDetik / 60);
@@ -206,7 +204,6 @@
           </div>
         `;
         
-        // Kirim data Tim beserta durasi pengerjaan
         kirimDataKeAdmin(teksDurasi);
         return;
       }
@@ -287,7 +284,8 @@
     function cekJawaban(jawabanUser) {
       const tombolPilihan = document.getElementById(`btn-${jawabanUser}`);
 
-      if (jawabanUser === ...soalSaatIni.jawabanBenar) { // Mengamankan logika pencocokan string
+      // KESALAHAN TYPO SUDAH DIPERBAIKI DI BARIS INI:
+      if (jawabanUser === soalSaatIni.jawabanBenar) { 
         tombolPilihan.classList.add('btn-benar');
         tombolPilihan.classList.remove('animasi-salah');
         document.getElementById(`centang-${jawabanUser}`).classList.remove('hidden');
