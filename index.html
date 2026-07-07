@@ -89,7 +89,7 @@
           <svg class="w-6 h-6 text-cyan-400 drop-shadow-[0_0_5px_rgba(0,255,255,0.6)]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4 4h6v6H4zM14 4h6v6h-6zM4 14h6v6H4zM14 14h2v2h-2zM18 14h2v2h-2zM14 18h2v2h-2zM18 18h2v2h-2z"></path>
           </svg>
-          <h1 class="text-lg font-bold text-cyan-50 tracking-wider hologram-text uppercase">QRIS <span class="text-cyan-400 font-light">Gate</span></h1>
+          <h1 class="text-lg font-bold text-cyan-50 tracking-wider hologram-text uppercase">QRIS Jelajah Kuliner<span class="text-cyan-400 font-light">Maluku Utara</span></h1>
         </div>
         <span id="badge-soal" class="text-cyan-300 text-xs font-mono bg-cyan-950/60 px-2.5 py-1 rounded border border-cyan-800/60 hidden">
           Soal: <span id="indikator-soal">0/0</span>
@@ -99,8 +99,20 @@
       <div id="quiz-container" class="min-h-[280px] flex flex-col justify-center">
         
         <div id="form-identitas" class="space-y-4 py-4">
-          <h2 class="text-base sm:text-lg text-cyan-200 font-mono tracking-wide">MASUKKAN IDENTITAS PESERTA:</h2>
-          <input type="text" id="input-nama" placeholder="Tulis nama lengkap Anda..." class="w-full p-3.5 rounded-xl bg-cyan-950/40 border border-cyan-500/30 text-white placeholder-cyan-600 focus:outline-none focus:border-cyan-400 text-sm font-mono tracking-wide transition-colors">
+          <h2 class="text-base sm:text-lg text-cyan-200 font-mono tracking-wide">PILIH TIM ANDA:</h2>
+          <select id="select-tim" class="w-full p-3.5 rounded-xl bg-cyan-950/60 border border-cyan-500/30 text-white focus:outline-none focus:border-cyan-400 text-sm font-mono tracking-wide transition-colors">
+            <option value="" class="text-cyan-600">-- SILAKAN PILIH TIM --</option>
+            <option value="Tim 1">Tim 1</option>
+            <option value="Tim 2">Tim 2</option>
+            <option value="Tim 3">Tim 3</option>
+            <option value="Tim 4">Tim 4</option>
+            <option value="Tim 5">Tim 5</option>
+            <option value="Tim 6">Tim 6</option>
+            <option value="Tim 7">Tim 7</option>
+            <option value="Tim 8">Tim 8</option>
+            <option value="Tim 9">Tim 9</option>
+            <option value="Tim 10">Tim 10</option>
+          </select>
           <button onclick="validasiDanMulai()" class="w-full py-3.5 bg-cyan-500/20 hover:bg-cyan-500/40 border border-cyan-400/50 rounded-xl text-cyan-50 font-mono text-sm font-bold tracking-widest uppercase transition-colors">
             MULAI SINKRONISASI >>
           </button>
@@ -112,25 +124,30 @@
   </div>
 
   <script>
-    // PENTING: MASUKKAN URL WEB APP ANDA DI SINI
+    // MASUKKAN URL WEB APP APPS SCRIPT ANDA DI SINI
     const API_URL = "https://script.google.com/macros/s/AKfycbxTISValSAZM5VzzWi6N-RpMTRDJuDCwLEkpdFonphoF4nI4hiwJ9loigw4kqiM0JyWZg/exec";
 
-    let namaUser = "";
+    let timUser = "";
     let daftarSoal = [];
     let indeksSoal = 0;
     let soalSaatIni = null;
     let toastTimeout;
+    
+    // Variabel Pencatat Waktu
+    let waktuMulai = 0;
 
     function validasiDanMulai() {
-      const input = document.getElementById('input-nama');
-      namaUser = input.value.trim();
+      const select = document.getElementById('select-tim');
+      timUser = select.value;
       
-      if (namaUser === "") {
-        alert("Nama wajib diisi untuk keperluan monitoring tim admin.");
+      if (timUser === "") {
+        alert("Pilih kelompok tim Anda terlebih dahulu!");
         return;
       }
       
-      // Tampilkan Loading state setelah mengisi nama
+      // Catat waktu mulai saat tombol ditekan
+      waktuMulai = Date.now();
+      
       document.getElementById('form-identitas').remove();
       document.getElementById('badge-soal').classList.remove('hidden');
       
@@ -142,7 +159,6 @@
         </div>
       `;
 
-      // Ambil data soal
       ambilDataSoal();
     }
 
@@ -172,16 +188,26 @@
       if (indeksSoal >= daftarSoal.length) {
         indikatorSpan.innerText = "DONE";
         
-        // Tampilkan layar loading monitoring sebelum selesai penuh
+        // HITUNG DURASI PENGERJAAN
+        let waktuSelesai = Date.now();
+        let selisihDetik = Math.floor((waktuSelesai - waktuMulai) / 1000);
+        let menit = Math.floor(selisihDetik / 60);
+        let detik = selisihDetik % 60;
+        
+        let teksDurasi = `${menit} menit ${detik} detik`;
+        if (menit === 0) {
+          teksDurasi = `${detik} detik`;
+        }
+        
         container.innerHTML = `
           <div class="text-center py-10">
             <div class="inline-block animate-spin h-8 w-8 border-4 border-emerald-400 border-t-transparent rounded-full mb-4"></div>
-            <h2 class="text-emerald-300 font-mono text-sm tracking-widest animate-pulse">MENGIRIM LOG SELESAI KE ADMIN...</h2>
+            <h2 class="text-emerald-300 font-mono text-sm tracking-widest animate-pulse">MENYIMPAN LOG & DURASI...</h2>
           </div>
         `;
         
-        // KIRIM DATA MONITORING KE SPREADSHEET (POST REQUEST)
-        kirimDataKeAdmin();
+        // Kirim data Tim beserta durasi pengerjaan
+        kirimDataKeAdmin(teksDurasi);
         return;
       }
 
@@ -220,29 +246,30 @@
       container.innerHTML = html;
     }
 
-    function kirimDataKeAdmin() {
+    function kirimDataKeAdmin(durasi) {
       fetch(API_URL, {
         method: "POST",
-        mode: "no-cors", // Digunakan agar tidak terhalang CORS policy di browser
+        mode: "no-cors",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ namaPeserta: namaUser })
+        body: JSON.stringify({ 
+          timPeserta: timUser,
+          durasiKerja: durasi 
+        })
       })
       .then(() => {
-        // Tampilan sukses akhir setelah data terkirim
         document.getElementById('quiz-container').innerHTML = `
           <div class="text-center py-6">
             <div class="inline-block bg-cyan-950/40 text-cyan-300 rounded-full p-4 border border-cyan-400/30 shadow-lg mb-4">
               <svg class="w-12 h-12 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
             </div>
             <h2 class="text-2xl font-bold text-white mb-2 hologram-text tracking-wide">SINKRONISASI BERHASIL</h2>
-            <p class="text-cyan-200 text-xs sm:text-sm font-light px-2 mb-2">Terima kasih, <b>${namaUser}</b>.</p>
-            <p class="text-cyan-500 text-xs font-mono">Laporan kelulusan Anda telah masuk ke sistem monitoring Admin.</p>
+            <p class="text-cyan-200 text-xs sm:text-sm font-light px-2 mb-2">Terima kasih, <b>${timUser}</b>.</p>
+            <p class="text-emerald-400 text-xs font-mono mb-2">Waktu Transaksi: ${durasi}</p>
+            <p class="text-cyan-500 text-xs font-mono">Data kelulusan tim telah disimpan ke database monitoring.</p>
           </div>
         `;
       })
-      .catch(err => {
-        console.log(err);
-      });
+      .catch(err => { console.log(err); });
     }
 
     function tampilkanToastSalah() {
@@ -260,7 +287,7 @@
     function cekJawaban(jawabanUser) {
       const tombolPilihan = document.getElementById(`btn-${jawabanUser}`);
 
-      if (jawabanUser === soalSaatIni.jawabanBenar) {
+      if (jawabanUser === ...soalSaatIni.jawabanBenar) { // Mengamankan logika pencocokan string
         tombolPilihan.classList.add('btn-benar');
         tombolPilihan.classList.remove('animasi-salah');
         document.getElementById(`centang-${jawabanUser}`).classList.remove('hidden');
